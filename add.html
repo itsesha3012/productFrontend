@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Product</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2 class="logo">Admin Panel</h2>
+      <nav>
+        <a href="#">Dashboard</a>
+        <a href="#">Users</a>
+        <a href="#">Orders</a>
+        <a href="index.html" class="active">Products</a>
+        <a href="#">Categories</a>
+        <a href="#">Reports</a>
+        <a href="#">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="main-header">
+        <!-- <h1>Add Product</h1>
+      </header>
+
+      <form id="product-form" class="form" enctype="multipart/form-data">
+        <input type="text" name="name" placeholder="Product Name" required>
+        <input type="number" name="price" placeholder="Price" required>
+        <textarea name="description" placeholder="Description"></textarea>
+        <input type="file" name="images" accept="image/*" multiple required>
+        <button type="submit" class="btn">Save Product</button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+      const token = localStorage.getItem("adminToken");
+  if (!token) {
+    window.location.href = "login.html"; // redirect if not logged in
+  }
+    const form = document.getElementById("product-form");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      const res = await fetch("http://localhost:7000/api/products", {
+        method: "POST",
+        body: formData
+      });
+
+      if (res.ok) {
+        alert("Product added successfully!");
+        window.location.href = "index.html"; // redirect back to dashboard
+      } else {
+        alert("Failed to add product");
+      }
+    });
+  </script> -->
+  <h2>Add Product</h2>
+<form id="addForm" enctype="multipart/form-data">
+  <input type="text" name="name" placeholder="Product Name" required />
+  <input type="number" name="price" placeholder="Price" required />
+  <textarea name="description" placeholder="Description"></textarea>
+  
+  <input type="file" id="images" name="images" multiple />
+  
+  <!-- preview -->
+  <div id="preview" style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap;"></div>
+  
+  <button type="submit">Add Product</button>
+</form>
+
+<script>
+  const imagesInput = document.getElementById("images");
+  const preview = document.getElementById("preview");
+
+  // show previews when files are selected
+  imagesInput.addEventListener("change", () => {
+    preview.innerHTML = ""; // clear old previews
+    [...imagesInput.files].forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.width = 100;
+        img.style.border = "1px solid #ccc";
+        img.style.borderRadius = "6px";
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // handle form submit
+  document.getElementById("addForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    await fetch("http://localhost:7000/api/products", {
+      method: "POST",
+      body: formData
+    });
+
+    alert("Product added!");
+    e.target.reset();
+    preview.innerHTML = ""; // clear previews after submit
+  });
+</script>
+
+</body>
+</html>

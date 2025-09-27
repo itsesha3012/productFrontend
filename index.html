@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2 class="logo">Admin Panel</h2>
+      <nav>
+        <a href="#">Dashboard</a>
+        <a href="#">Users</a>
+        <a href="#">Orders</a>
+        <a href="index.html" class="active">Products</a>
+        <a href="#">Categories</a>
+        <a href="#">Reports</a>
+        <a href="#">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="main-header">
+        <h1>Product Management</h1>
+        <a href="add.html" class="btn add-btn">➕ Add Product</a>
+      </header>
+
+      <!-- Product Table -->
+      <div id="table-container" class="table-container"></div>
+    </main>
+  </div>
+
+  <script>
+      const token = localStorage.getItem("adminToken");
+  if (!token) {
+    window.location.href = "login.html"; // redirect if not logged in
+  }
+
+      async function loadProducts() {
+    try {
+      const res = await fetch("http://localhost:7000/api/products");
+      const products = await res.json();
+
+      const container = document.getElementById("table-container");
+      container.innerHTML = "";
+
+      // Create table structure
+      const table = document.createElement("table");
+      table.className = "product-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price (₹)</th>
+            <th>Description</th>
+            <th>Images</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            products.length === 0
+              ? `<tr><td colspan="4" class="no-data">No data found</td></tr>`
+              : products.map(p => `
+                  <tr>
+                    <td>${p.name}</td>
+                    <td>${p.price}</td>
+                    <td>${p.description || ""}</td>
+                    <td>
+                      <div class="table-images">
+                        ${p.images.map(img => `<img src="http://localhost:7000${img}" alt="img">`).join("")}
+                      </div>
+                    </td>
+                  </tr>
+                `).join("")
+          }
+        </tbody>
+      `;
+      container.appendChild(table);
+
+    } catch (err) {
+      console.error("Error loading products:", err);
+    }
+  }
+
+  loadProducts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* --- Add Product Form Styles --- */
+    .add-product-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .add-product-container h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    .add-product-container form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .add-product-container label {
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .add-product-container input[type="text"],
+    .add-product-container input[type="number"],
+    .add-product-container textarea,
+    .add-product-container input[type="file"] {
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .add-product-container button {
+      padding: 12px;
+      background-color: #4caf50;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .add-product-container button:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .file-info {
+      font-size: 14px;
+      color: #888;
+      margin-top: -15px;
+      margin-bottom: 15px;
+    }
+
+    /* Logout button style */
+    .logout-btn {
+      background: #f44336;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 15px;
+      transition: background 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">Admin Panel</h2>
+    <nav>
+      <a href="#">Dashboard</a>
+      <a href="#">Users</a>
+      <a href="#">Orders</a>
+      <a href="#" class="active" id="products-link">Products</a>
+      <a href="#">Categories</a>
+      <a href="#">Reports</a>
+      <a href="#">Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="main-header">
+      <h1 id="main-title">Product Management</h1>
+      <div>
+        <a href="#" class="btn add-btn" id="show-add-form">➕ Add Product</a>
+        <a href="#" class="logout-btn" id="logout-btn">🚪 Logout</a>
+      </div>
+    </header>
+
+    <!-- Container for Table or Form -->
+    <div id="content-container" class="table-container"></div>
+  </main>
+</div>
+
+<script>
+const token = localStorage.getItem("adminToken");
+if (!token) window.location.href = "login.html"; // redirect if not logged in
+
+const contentContainer = document.getElementById("content-container");
+const mainTitle = document.getElementById("main-title");
+const showAddBtn = document.getElementById("show-add-form");
+const logoutBtn = document.getElementById("logout-btn");
+
+// ✅ Logout handler
+logoutBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("adminUsername");
+  window.location.href = "login.html";
+});
+
+// Load product table by default
+async function loadProducts() {
+  mainTitle.textContent = "Product Management";
+  contentContainer.innerHTML = "";
+  try {
+    const res = await fetch("http://localhost:7000/api/products");
+    const products = await res.json();
+
+    const table = document.createElement("table");
+    table.className = "product-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price (₹)</th>
+          <th>Description</th>
+          <th>Images</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          products.length === 0
+            ? `<tr><td colspan="5" class="no-data">No data found</td></tr>`
+            : products.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.price}</td>
+                  <td>${p.description || ""}</td>
+                  <td>
+                    <div class="table-images">
+                      ${p.images.map(img => `<img src="http://localhost:7000${img}" alt="img" width="50">`).join("")}
+                    </div>
+                  </td>
+                  <td>
+                    <a href="edit.html?id=${p._id}" class="edit-btn">✏️ Edit</a>
+                  </td>
+                </tr>
+              `).join("")
+        }
+      </tbody>
+    `;
+    contentContainer.appendChild(table);
+  } catch (err) {
+    console.error("Error loading products:", err);
+  }
+}
+
+// Show Add Product Form
+showAddBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  mainTitle.textContent = "Add New Product";
+  contentContainer.innerHTML = `
+    <div class="add-product-container">
+      <form id="addProductForm" enctype="multipart/form-data">
+        <label for="name">Product Name</label>
+        <input type="text" id="name" name="name" placeholder="Enter product name" required>
+
+        <label for="price">Price</label>
+        <input type="number" id="price" name="price" placeholder="Enter price" required>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" placeholder="Enter product description" required></textarea>
+
+        <label for="images">Upload Images (Max 5)</label>
+        <input type="file" id="images" name="images" multiple accept="image/*">
+        <div class="file-info">You can select up to 5 images.</div>
+
+        <button type="submit">Add Product</button>
+      </form>
+    </div>
+  `;
+
+  const imagesInput = document.getElementById('images');
+  imagesInput.addEventListener('change', () => {
+    const files = Array.from(imagesInput.files).map(f => f.name).join(', ');
+    document.querySelector('.file-info').textContent = files || 'You can select up to 5 images.';
+  });
+
+  // Handle form submit
+  document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch('http://localhost:7000/api/products', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      alert("Product added successfully!");
+      loadProducts(); // go back to product table
+    } catch (err) {
+      console.error("Error adding product:", err);
+      alert("Failed to add product");
+    }
+  });
+});
+
+// Load products on page load
+loadProducts();
+</script>
+</body>
+</html>
